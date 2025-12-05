@@ -73,6 +73,17 @@ class _ProfileTabState extends State<ProfileTab> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.Black,
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.yellow,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.Black,
       body: SafeArea(
