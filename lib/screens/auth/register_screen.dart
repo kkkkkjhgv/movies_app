@@ -114,9 +114,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters';
                     }
+                    // Don't show strong password error in field validator to avoid confusion
+                    // We'll check it before submission
                     return null;
                   },
                 ),
@@ -464,12 +466,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleCreateAccount() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    // First validate form fields
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    
+    // Then validate password strength and match
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    
+    // Check password match first
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Passwords do not match'),
+          backgroundColor: AppColors.Red,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    
+    // Let API validate password strength - it will return appropriate error message
+    
+    // All validations passed, proceed with registration
+    setState(() {
+      _isLoading = true;
+    });
 
-      try {
+    try {
         final request = RegisterRequest(
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
@@ -525,17 +551,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
             _isLoading = false;
           });
 
-          // Show error message
+          // Show error message with better formatting
+          String errorMessage = e.toString().replaceAll('Exception: ', '');
+          
+          // Improve common error messages
+          if (errorMessage.toLowerCase().contains('password') && 
+              errorMessage.toLowerCase().contains('strong')) {
+            errorMessage = 'Password must be strong:\n'
+                '• At least 8 characters\n'
+                '• Include uppercase and lowercase letters\n'
+                '• Include at least one number\n'
+                '• Include at least one special character (!@#\$%^&*)';
+          } else if (errorMessage.contains('[') && errorMessage.contains(']')) {
+            // Remove brackets and improve formatting
+            errorMessage = errorMessage
+                .replaceAll('[', '')
+                .replaceAll(']', '')
+                .replaceAll('Password is must be strong', 'Password must be strong')
+                .replaceAll('confirm password must be strong', 'Confirm password must be strong');
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
+              content: Text(errorMessage),
               backgroundColor: AppColors.Red,
               behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
+              duration: const Duration(seconds: 5),
             ),
           );
         }
       }
     }
   }
-}

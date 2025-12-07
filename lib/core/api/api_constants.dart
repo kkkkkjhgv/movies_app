@@ -8,5 +8,11 @@ class ApiConstants {
   static const String profile = '/profile';
   static const String updateProfile = '/profile';
   static const String deleteProfile = '/profile';
+  
+  // YTS Movies API
+  static const String ytsBaseUrl = 'https://yts.lt/api/v2';
+  static const String listMovies = '/list_movies.json';
+  static const String movieDetails = '/movie_details.json';
+  static const String movieSuggestions = '/movie_suggestions.json';
 }
 

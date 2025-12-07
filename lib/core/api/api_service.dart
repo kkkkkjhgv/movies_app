@@ -11,6 +11,7 @@ import 'package:movie/core/api/models/update_profile_request.dart';
 import 'package:movie/core/api/models/update_profile_response.dart';
 import 'package:movie/core/api/models/get_profile_response.dart';
 import 'package:movie/core/api/models/delete_profile_response.dart';
+import 'package:movie/core/api/models/movie_model.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -247,6 +248,160 @@ class ApiService {
       } else {
         throw Exception(
           responseData['message'] ?? 'Failed to delete account. Please try again.',
+        );
+      }
+    } catch (e) {
+      if (e is FormatException) {
+        throw Exception('Data format error. Please try again.');
+      } else if (e.toString().contains('SocketException') || 
+                 e.toString().contains('Failed host lookup') ||
+                 e.toString().contains('No address associated')) {
+        throw Exception('Cannot connect to server. Please check your internet connection.');
+      } else if (e is Exception) {
+        final errorMessage = e.toString();
+        if (errorMessage.contains('Exception: ')) {
+          rethrow;
+        }
+        throw Exception('Error: ${errorMessage.replaceAll('Exception: ', '')}');
+      }
+      throw Exception('An unexpected error occurred. Please try again.');
+    }
+  }
+
+  Future<MoviesListResponse> getMoviesList({
+    int? limit,
+    int? page,
+    String? quality,
+    double? minimumRating,
+    String? queryTerm,
+    String? genre,
+    String? sortBy,
+  }) async {
+    try {
+      final uri = Uri.parse('${ApiConstants.ytsBaseUrl}${ApiConstants.listMovies}');
+      final queryParams = <String, String>{};
+      
+      if (limit != null) queryParams['limit'] = limit.toString();
+      if (page != null) queryParams['page'] = page.toString();
+      if (quality != null) queryParams['quality'] = quality;
+      if (minimumRating != null) queryParams['minimum_rating'] = minimumRating.toString();
+      if (queryTerm != null) queryParams['query_term'] = queryTerm;
+      if (genre != null) queryParams['genre'] = genre;
+      if (sortBy != null) queryParams['sort_by'] = sortBy;
+
+      final url = uri.replace(queryParameters: queryParams);
+      
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Check if status is 'ok' in response
+        if (responseData['status'] == 'ok') {
+          return MoviesListResponse.fromJson(responseData);
+        } else {
+          throw Exception(
+            responseData['status_message'] ?? 'Failed to fetch movies. Please try again.',
+          );
+        }
+      } else {
+        throw Exception(
+          responseData['status_message'] ?? 'Failed to fetch movies. Please try again.',
+        );
+      }
+    } catch (e) {
+      if (e is FormatException) {
+        throw Exception('Data format error. Please try again.');
+      } else if (e.toString().contains('SocketException') || 
+                 e.toString().contains('Failed host lookup') ||
+                 e.toString().contains('No address associated')) {
+        throw Exception('Cannot connect to server. Please check your internet connection.');
+      } else if (e is Exception) {
+        final errorMessage = e.toString();
+        if (errorMessage.contains('Exception: ')) {
+          rethrow;
+        }
+        throw Exception('Error: ${errorMessage.replaceAll('Exception: ', '')}');
+      }
+      throw Exception('An unexpected error occurred. Please try again.');
+    }
+  }
+
+  Future<MovieDetailsResponse> getMovieDetails(int movieId) async {
+    try {
+      final url = Uri.parse('${ApiConstants.ytsBaseUrl}${ApiConstants.movieDetails}?movie_id=$movieId');
+      
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Check if status is 'ok' in response
+        if (responseData['status'] == 'ok') {
+          return MovieDetailsResponse.fromJson(responseData);
+        } else {
+          throw Exception(
+            responseData['status_message'] ?? 'Failed to fetch movie details. Please try again.',
+          );
+        }
+      } else {
+        throw Exception(
+          responseData['status_message'] ?? 'Failed to fetch movie details. Please try again.',
+        );
+      }
+    } catch (e) {
+      if (e is FormatException) {
+        throw Exception('Data format error. Please try again.');
+      } else if (e.toString().contains('SocketException') || 
+                 e.toString().contains('Failed host lookup') ||
+                 e.toString().contains('No address associated')) {
+        throw Exception('Cannot connect to server. Please check your internet connection.');
+      } else if (e is Exception) {
+        final errorMessage = e.toString();
+        if (errorMessage.contains('Exception: ')) {
+          rethrow;
+        }
+        throw Exception('Error: ${errorMessage.replaceAll('Exception: ', '')}');
+      }
+      throw Exception('An unexpected error occurred. Please try again.');
+    }
+  }
+
+  Future<MovieSuggestionsResponse> getMovieSuggestions(int movieId) async {
+    try {
+      final url = Uri.parse('${ApiConstants.ytsBaseUrl}${ApiConstants.movieSuggestions}?movie_id=$movieId');
+      
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Check if status is 'ok' in response
+        if (responseData['status'] == 'ok') {
+          return MovieSuggestionsResponse.fromJson(responseData);
+        } else {
+          throw Exception(
+            responseData['status_message'] ?? 'Failed to fetch movie suggestions. Please try again.',
+          );
+        }
+      } else {
+        throw Exception(
+          responseData['status_message'] ?? 'Failed to fetch movie suggestions. Please try again.',
         );
       }
     } catch (e) {
